@@ -8,12 +8,12 @@ Released to the GPL v3
 ```
 $ git clone https://github.com/vbextreme/gnome-overview-conf.git
 $ cd gnome-overview-conf
-$ sudo install
+$ sudo ./install
 ```
 
 ### Uninstall
 ```
-$ sudo uninstall
+$ sudo ./uninstall
 ```
 
 ### Usage
