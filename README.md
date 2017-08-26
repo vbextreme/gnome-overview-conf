@@ -1,4 +1,4 @@
-#gnome-overview-conf v0.0
+# gnome-overview-conf v0.0
 edit gnome overview setting</br>
 
 Released to the GPL v3
