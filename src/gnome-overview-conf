@@ -1,0 +1,222 @@
+#!/bin/perl -w
+
+=pod
+
+=head1 NAME
+
+gnome-overview-conf
+
+=head2 SYNOPSIS
+
+change and view overview configuration
+
+=head2 USAGE
+
+<view> for view configuration
+<varName> <value> for set value 
+<restore> set original value
+
+=head2 COPYRIGHT
+
+Copyright vbextreme 2017
+License gplv3
+
+=cut
+
+
+
+use strict;
+use warnings;
+use diagnostics;
+use lib '.' ;
+use File::Copy;
+
+our $VERSION = 0.0;
+
+my $REX_VALUE = '[ \t]*=[ \t]*([0-9]+)';
+my $REX_VALUE_SET = '([ \t]*=)([ \t]*)([0-9]+)';
+my $REX_ICON_GRID = '\.icon-grid[ \t]*{[ \t]*';
+my $REX_SPACING = 'spacing:[ \t]*([0-9]+)px\;[ \t]*';
+my $REX_HORIZONTAL = '-shell-grid-horizontal-item-size:[ \t]*([0-9]+)px\;[ \t]*';
+my $REX_VERTICAL = '-shell-grid-vertical-item-size:[ \t]*([0-9]+)px\;';
+my $REX_CSS = "$REX_ICON_GRID$REX_SPACING$REX_HORIZONTAL$REX_VERTICAL";
+my $libFile = '/usr/lib64/gnome-shell/libgnome-shell.so';
+my $libBackup = "$libFile.bak";
+my $bufSize = 4096;
+my $rawBuf;
+my @themeBuf;
+my $theme = $> ? `gsettings get org.gnome.shell.extensions.user-theme name`:`sudo -u "\$USER" gsettings get org.gnome.shell.extensions.user-theme name`;
+my $themeDir = "/usr/share/themes";
+my $themeFile = undef;
+my $themeBackup = undef;
+
+if (defined $theme and $theme){
+	$theme = substr($theme, 1, length($theme)-3);
+	$themeDir .= "/$theme/gnome-shell";
+	$themeFile = "$themeDir/gnome-shell.css";
+	$themeBackup = "$themeFile.bak";
+	if ( -e $themeFile ){
+		unless ( -e $themeBackup ){
+			print "create theme backup\n";
+			copy($themeFile, $themeBackup) or die "cant create backup\n$!" unless -e $themeBackup;
+		}
+	}
+	else{
+		print "theme: $themeFile not exists\n";
+		$themeFile = undef;
+	}
+}
+
+die "you not have libgnome-shell.so\n$!" unless -e $libFile;
+unless( -e $libBackup ){
+	print "create shell backup\n";
+	copy($libFile, $libBackup) or die "cant create backup\n$!";
+}
+
+rawRead();
+themeRead();
+
+if ( scalar @ARGV < 1 ){
+	usage();
+}
+
+usage() if $ARGV[0] eq 'help';
+view() and exit 1 if $ARGV[0] eq 'view';
+restore() and exit 1 if $ARGV[0] eq 'restore';
+
+while(@ARGV){
+	my $var = shift @ARGV;
+	my $val = shift @ARGV;
+	die "no value set" unless defined $val;
+	setValShell($var,$val);
+	setValCSS($var,$val);
+}
+
+
+
+sub usage{
+	my $us="usage gnome-overview-conf v$VERSION
+first time execute 'sudo gnome-overview-conf view' for automatic generate backup
+gnome-overview-conf help                # display this
+gnome-overview-conf view                # explore current value
+sudo gnome-overview-conf <name> <value> # set new <value> for <name> parameter
+sudo gnome-overview-conf restore        # restore original value
+";
+	print "$us";
+	exit 1;
+}
+
+sub rawRead{
+	open my $fd, "<", $libFile or die "cant open $libFile\n$!";
+	binmode($fd);
+	my ($buf, $nread);
+	while( ($nread = sysread($fd,$buf,$bufSize)) > 0 ){
+		$rawBuf .= $buf;
+	}
+	return 1;
+}
+
+sub themeRead{
+	$#themeBuf = -1;
+	return 0 unless defined $themeFile;
+	open my $fd, "<", $themeFile or die "cant open $themeFile\n$!";
+	@themeBuf = <$fd>;
+	return 1;
+}
+
+sub view{
+	my ($max_columns) = $rawBuf =~ /MAX_COLUMNS$REX_VALUE/;
+	my ($min_rows) = $rawBuf =~ /MIN_ROWS$REX_VALUE/;
+	my ($icon_size) = $rawBuf =~ /const ICON_SIZE$REX_VALUE/;
+	
+	print "max_columns = $max_columns\n";
+	print "min_rows    = $min_rows\n";
+	print "icon_size   = $icon_size\n";
+	
+	unless( defined $themeFile ){
+		print "you not have select theme, use gnome-tweak-tool and select a non built-in theme\n";
+		return 1;
+	}
+
+	my ($spacing,$horizontal,$vertical);
+	foreach my $line (@themeBuf){
+		($spacing,$horizontal,$vertical) = $line =~ /$REX_CSS/;
+		last if $spacing;
+	}
+		
+	print "spacing    = $spacing\n" if $spacing;
+	print "horizontal = $horizontal\n" if $horizontal;
+	print "vertical   = $vertical\n" if $vertical;
+	return 1;
+}
+
+sub restore{
+	copy($libBackup, $libFile) or die "cant restore a file\n$1";
+	copy($themeBackup, $themeFile) or die "cant restore a file\n$1" if defined $themeFile;
+	print "File restored\n";
+	return 1;
+}
+
+sub setValShell{
+	my ($var,$val) = @_;
+	my $real = undef;
+	
+	$real = "MAX_COLUMNS" if $var eq 'max_columns';
+	$real = "MIN_ROWS" if $var eq 'min_rows';
+	$real = "const ICON_SIZE" if $var eq 'icon_size';
+	return undef unless defined $real;
+
+	my ($preset,$space,$current) = $rawBuf =~ /$real$REX_VALUE_SET/;
+
+	if ($val < 10){
+		$rawBuf =~ s/$real$preset$space$current/$real$preset$space $val/ if $current > 9;
+		$rawBuf =~ s/$real$preset$space$current/$real$preset$space$val/ if $current < 10;
+	}
+	elsif( $val < 100){
+		if ( $current > 9 ){
+			$rawBuf =~ s/$real$preset$space$current/$real$preset$space$val/;
+		}
+		elsif ($current < 10 and length $space >= 1 ){
+			my $repspace = $space;
+			chop $repspace;
+			$rawBuf =~ s/$real$preset$space$current/$real$preset$repspace$val/;
+		}
+		else{
+			die 'unaspected spacing on file';
+		}
+	}
+	else{
+		die 'to big value';
+	}
+	
+	open my $fd, ">", $libFile or die "cant write config to file $libFile\n$!";
+	syswrite($fd,$rawBuf);
+	print "config $var saved\n";
+	close $fd;
+	rawRead();
+}
+
+sub setValCSS{
+	my ($var,$val) = @_;
+	my $real = undef;
+	return undef unless defined $themeFile;
+
+	$real = "spacing" if $var eq 'spacing';
+	$real = "-shell-grid-horizontal-item-size" if $var eq 'horizontal';
+	$real = "-shell-grid-vertical-item-size" if $var eq 'vertical';
+	return undef unless defined $real;
+
+	open my $fd, ">", $themeFile;
+	my ($spacing,$horizontal,$vertical);
+	foreach my $line (@themeBuf){
+		($spacing,$horizontal,$vertical) = $line =~ /$REX_CSS/;
+		if ($spacing){
+			$line =~ s/$real:([ \t]*)[0-9]+/$real:$1$val/;
+		}
+		print $fd $line;
+	}
+	close $fd;
+	themeRead();
+	return 1;
+}
+
