@@ -1,9 +1,10 @@
-# gnome-overview-conf v0.3
+# gnome-overview-conf v0.4
 edit gnome overview setting</br>
 
 Released under GPL v3
 
 ## Revision
+0.4 fix import not reload value, fix formatting export, add theme and screenshot
 0.3 fix crash shell
 0.2 separate backup, add import and export, fix not save
 0.1 code style and initial support for built-in Adwaita theme
@@ -26,3 +27,8 @@ for view all command</br>
 ```
 $ gnome-overview-conf help
 ```
+after setting value reload shell with</br>
+```
+ALT+F2 
+r
+``` 

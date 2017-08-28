@@ -1,2 +1,2 @@
 #!/bin/bash
-rm -f /usr/local/bin/gnome-overview-conf
+rm -f /usr/bin/gnome-overview-conf

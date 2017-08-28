@@ -1,2 +1,2 @@
 #!/bin/bash
-cp ./src/gnome-overview-conf /usr/local/bin/
+cp ./src/gnome-overview-conf /usr/bin/

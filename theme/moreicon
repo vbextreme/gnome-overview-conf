@@ -1,0 +1,6 @@
+max_columns = 15
+min_rows = 7
+icon_size = 48
+spacing = 15
+horizontal = 86
+vertical = 86
