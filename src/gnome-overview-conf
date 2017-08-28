@@ -45,7 +45,7 @@ use File::Copy;
 ##########################
 ##########################
 
-our $VERSION = 0.2;
+our $VERSION = 0.3;
 
 my $REX_IMPORT ='([a-z_]+)[ \t]*=[ \t]*([0-9]+)';
 my $REX_VALUE = '[ \t]*=[ \t]*([0-9]+)';
@@ -68,7 +68,8 @@ my %MATCH = (	max_columns => '(const MAX_COLUMNS[ \t]*=)',
 my %shell = (	file =>   '/usr/lib64/gnome-shell/libgnome-shell.so',
 				backup => '/usr/lib64/gnome-shell/libgnome-shell.so.bak',
 				readSize => 4096,
-				buf => ''
+				buf => '',
+				raw => ''
 			); 
 
 my %theme = (	file => undef,
@@ -79,7 +80,8 @@ my %theme = (	file => undef,
 				themeBuiltIn => 'gnome-shell-theme.gresource',
 				dirBuiltIn => '/usr/share/gnome-shell',
 				readSize => 4096,
-				buf => ''
+				buf => '',
+				raw => ''
 			);
 
 my %SELECT = (	max_columns => \%shell,
@@ -178,12 +180,13 @@ sub rawRead{
 	while( ($nread = sysread($fd,$buf,$h->{readSize})) > 0 ){
 		$h->{buf} .= $buf;
 	}
+	$h->{raw} = $h->{buf};
 	return 1;
 }
 
 sub rawWrite{
 	my ($h) = shift;
-	open my $fd, ">", $h->{file} or die "cant write $h->{file}\ncause:$!\n";
+	open my $fd, "+<", $h->{file} or die "cant write $h->{file}\ncause:$!\n";
 	syswrite($fd,$h->{buf});
 }
 
