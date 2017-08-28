@@ -68,8 +68,7 @@ my %MATCH = (	max_columns => '(const MAX_COLUMNS[ \t]*=)',
 my %shell = (	file =>   '/usr/lib64/gnome-shell/libgnome-shell.so',
 				backup => '/usr/lib64/gnome-shell/libgnome-shell.so.bak',
 				readSize => 4096,
-				buf => '',
-				raw => ''
+				buf => ''
 			); 
 
 my %theme = (	file => undef,
@@ -80,8 +79,7 @@ my %theme = (	file => undef,
 				themeBuiltIn => 'gnome-shell-theme.gresource',
 				dirBuiltIn => '/usr/share/gnome-shell',
 				readSize => 4096,
-				buf => '',
-				raw => ''
+				buf => ''
 			);
 
 my %SELECT = (	max_columns => \%shell,
@@ -99,7 +97,7 @@ my %SELECT = (	max_columns => \%shell,
 ########################
 ########################
 
-die "you not have libgnome-shell.so\n$!\n" unless -e $shell{file};
+die "you not have $shell{file}\n$!\n" unless -e $shell{file};
 initTheme();
 rawRead(\%shell);
 rawRead(\%theme);

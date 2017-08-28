@@ -27,8 +27,34 @@ for view all command</br>
 ```
 $ gnome-overview-conf help
 ```
+create backup for prevent problems</br>
+```
+$ sudo gnome-overview-conf backup
+```
+restore backup, save you</br>
+```
+$ sudo gnome-overview-conf restore
+```
+view current configuration</br>
+```
+$ gnome-overview-conf view
+```
+set one or more value</br>
+```
+$ sudo gnome-overview-conf max_columns 10 min_rows 5 icon_size 64 horizontal 112 vertical 120
+```
 after setting value reload shell with</br>
 ```
 ALT+F2 
 r
-``` 
+```
+go to directory ./theme</br>
+save current overview theme, example name mytheme</br>
+```
+$ sudo gnome-overview-conf export mytheme
+```
+go to directory ./theme</br>
+import theme, example default</br>
+```
+$ sudo gnome-overview-conf import default
+```
