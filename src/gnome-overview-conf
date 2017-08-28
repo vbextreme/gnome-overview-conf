@@ -178,7 +178,6 @@ sub rawRead{
 	while( ($nread = sysread($fd,$buf,$h->{readSize})) > 0 ){
 		$h->{buf} .= $buf;
 	}
-	$h->{raw} = $h->{buf};
 	return 1;
 }
 
