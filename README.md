@@ -1,9 +1,10 @@
 # gnome-overview-conf v0.1
 edit gnome overview setting</br>
 
-Released to the GPL v3
+Released under GPL v3
 
 ## Revision
+0.2 separate backup, add import and export, fix not save
 0.1 code style and initial support for built-in Adwaita theme
 
 ## How To
@@ -20,12 +21,6 @@ $ sudo ./uninstall
 ```
 
 ### Usage
-first lanch use</br>
-```
-$ sudo gnome-overview-conf view
-```
-for automatic backup file</br>
-</br>
 for view all command</br>
 ```
 $ gnome-overview-conf help

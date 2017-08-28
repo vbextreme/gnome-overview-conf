@@ -12,15 +12,17 @@ change and view overview configuration
 
 =head2 USAGE
 
-first time execute 'sudo gnome-overview-conf view' for automatic generate backup</br>
-gnome-overview-conf help                  display this</br>
-gnome-overview-conf view                  explore current value</br>
-sudo gnome-overview-conf <name> <value>   set new <value> for <name> parameter</br>
-sudo gnome-overview-conf restore          restore original value</br>
+gnome-overview-conf help                # display this
+gnome-overview-conf view                # explore current value
+gnome-overview-conf import <file>       # import setting from file
+gnome-overview-conf export <file>       # export setting to file
+sudo gnome-overview-conf <name> <value> # set new <value> for <name> parameter
+sudo gnome-overview-conf backup         # backup value
+sudo gnome-overview-conf restore        # restore original value
 
 =head2 COPYRIGHT
 
-Copyright vbextreme 2017</br>
+Copyright vbextreme 2017
 License gplv3
 
 =cut
@@ -45,6 +47,7 @@ use File::Copy;
 
 our $VERSION = 0.1;
 
+my $REX_IMPORT ='([a-z_]+)[ \t]*=[ \t]*([0-9]+)';
 my $REX_VALUE = '[ \t]*=[ \t]*([0-9]+)';
 my $REX_VALUE_SET = '([ \t]*=)([ \t]*)([0-9]+)';
 my $REX_ICON_GRID = '\.icon-grid[ \t]*{[ \t\n]*';
@@ -95,20 +98,16 @@ my %SELECT = (	max_columns => \%shell,
 ########################
 
 die "you not have libgnome-shell.so\n$!\n" unless -e $shell{file};
-if( not(-e $shell{backup}) && $> == 0 ){
-	print "create shell backup\n";
-	copy($shell{file}, $shell{backup}) or die "cant create backup\ncause:$!\n";
-}
-
 initTheme();
 rawRead(\%shell);
 rawRead(\%theme);
 
-#print "<RAW>$theme{buf}</RAW>"; # DEBUG
-
 usage() if scalar @ARGV < 1 or $ARGV[0] eq 'help';
 view() and exit 1 if $ARGV[0] eq 'view';
 restore() and exit 1 if $ARGV[0] eq 'restore';
+backup() and exit 1 if $ARGV[0] eq 'backup';
+timport($ARGV[1]) and exit 1 if $ARGV[0] eq 'import';
+texport($ARGV[1]) and exit 1 if $ARGV[0] eq 'export';
 
 while(@ARGV){
 	my $var = shift @ARGV;
@@ -118,10 +117,8 @@ while(@ARGV){
 	setPreserve($SELECT{$var}, $MATCH{$var}, $val);
 }
 
-#rawWrite(\%shell);
-#rawWrite(\%theme);
-
-print "<RAW>$shell{buf}</RAW>";
+rawWrite(\%shell);
+rawWrite(\%theme);
 
 #############################
 #############################
@@ -132,10 +129,12 @@ print "<RAW>$shell{buf}</RAW>";
 
 sub usage{
 	my $us="usage gnome-overview-conf v$VERSION
-first time execute 'sudo gnome-overview-conf view' for automatic generate backup
 gnome-overview-conf help                # display this
 gnome-overview-conf view                # explore current value
+gnome-overview-conf import <file>       # import setting from file
+gnome-overview-conf export <file>       # export setting to file
 sudo gnome-overview-conf <name> <value> # set new <value> for <name> parameter
+sudo gnome-overview-conf backup         # backup value
 sudo gnome-overview-conf restore        # restore original value
 ";
 	print "$us";
@@ -168,10 +167,6 @@ sub initTheme{
 	else{
 		initBuiltIn();
 	}
-	if( not(-e $theme{backup}) && $> == 0 ){
-		print "create theme backup\n";
-		copy($theme{file}, $theme{backup}) or die "cant create backup\ncause:$!\n";
-	}
 }
 
 sub rawRead{
@@ -189,7 +184,7 @@ sub rawRead{
 sub rawWrite{
 	my ($h) = shift;
 	open my $fd, ">", $h->{file} or die "cant write $h->{file}\ncause:$!\n";
-	syswrite($fd,$h->buf);
+	syswrite($fd,$h->{buf});
 }
 
 sub loadValue{
@@ -218,6 +213,14 @@ sub restore{
 	return 1;
 }
 
+sub backup{
+	die "Error privilege\ncause:you need root\n" if $>;
+	print "create theme backup\n";
+	copy($theme{file}, $theme{backup}) or die "cant create backup\ncause:$!\n";
+	print "create shell backup\n";
+	copy($shell{file}, $shell{backup}) or die "cant create backup\ncause:$!\n";
+}
+
 sub setPreserve{
 	my ($h, $match, $newValue) = @_;	
 	my ($unused, $space,$value) = $h->{buf} =~ /$match([ \t]*)([0-9]+)/;
@@ -227,7 +230,34 @@ sub setPreserve{
 	my $nspace = $maxlen - $len;
 	$space = $nspace ? ' ' x $nspace : '';
 	my $replace = "$space$newValue";
-	$h->{buf} =~ s/${match}[ \t]*[0-9]+/$1$replace/g;
+	$h->{buf} =~ s/${match}[ \t]*[0-9]+/$1$replace/;
+	return 1;
+}
+
+sub texport{
+	my ($dest) = shift;
+	die "Error no file\ncause:you need pass filename\n" unless defined $dest;
+	loadValue();
+	open my $fd, ">", $dest or die "cant write $dest\ncause:$!\n";
+	print $fd "max_columns = $shell{max_columns}\n";
+	print $fd "min_rows    = $shell{min_rows}\n";
+	print $fd "icon_size   = $shell{icon_size}\n";
+	print $fd "spacing    = $theme{spacing}\n";
+	print $fd "horizontal = $theme{horizontal}\n";
+	print $fd "vertical   = $theme{vertical}\n";
+	return 1;
+}
+
+sub timport{
+	my ($src) = shift;
+	die "Error no file\ncause:you need pass filename\n" unless defined $src;
+	open my $fd, "<", $src or die "cant write $src\ncause:$!\n";
+	while( my $line = <$fd> ){
+		my ($var, $val) = $line =~ /REX_IMPORT/;
+		die "Error import\ncause: no value set\n" unless defined $val;
+		die "Error import\ncause: $var is not valid variable\n" unless exists $MATCH{$var};
+		setPreserve($SELECT{$var}, $MATCH{$var}, $val);
+	}
 	return 1;
 }
 
