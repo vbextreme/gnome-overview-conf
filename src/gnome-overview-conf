@@ -1,4 +1,4 @@
-#!/bin/perl -w
+#!/usr/bin/env perl -w
 
 =pod
 
@@ -45,7 +45,7 @@ use File::Copy;
 ##########################
 ##########################
 
-our $VERSION = 0.4;
+our $VERSION = 0.5;
 
 my $REX_IMPORT ='([a-z_]+)[ \t]*=[ \t]*([0-9]+)';
 my $REX_VALUE = '[ \t]*=[ \t]*([0-9]+)';
@@ -65,7 +65,8 @@ my %MATCH = (	max_columns => '(const MAX_COLUMNS[ \t]*=)',
 				vertical =>   '(\.icon-grid[ \t]*{[ \t\n]*spacing:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-horizontal-item-size:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-vertical-item-size:)'
 			);
 
-my %shell = (	file =>   '/usr/lib64/gnome-shell/libgnome-shell.so',
+my %shell = (	file32 => '/usr/lib/gnome-shell/libgnome-shell.so',
+				file =>   '/usr/lib64/gnome-shell/libgnome-shell.so',
 				backup => '/usr/lib64/gnome-shell/libgnome-shell.so.bak',
 				readSize => 4096,
 				buf => ''
@@ -97,7 +98,7 @@ my %SELECT = (	max_columns => \%shell,
 ########################
 ########################
 
-die "you not have $shell{file}\n$!\n" unless -e $shell{file};
+initLibShell();
 initTheme();
 rawRead(\%shell);
 rawRead(\%theme);
@@ -141,6 +142,12 @@ sudo gnome-overview-conf restore        # restore original value
 	exit 1;
 }
 
+sub initLibShell{
+	unless( $shell{file} ){
+		die "you use gnome?\ncause:not find libgnome in $shell{file} or $shell{file32}\n" unless -e $shell{file32};
+		$shell{file} = $shell{file32};
+	}
+}
 
 sub initBuiltIn{
 	$theme{file} = "$theme{dirBuiltIn}/$theme{themeBuiltIn}";
