@@ -4,7 +4,7 @@ edit gnome overview setting</br>
 Released under GPL v3
 
 ## Revision
-0.5 fix shebang, fix directory lib is different in some distro
+0.5 fix shebang, fix directory lib is different in some distro</br>
 0.4 fix import not reload value, fix formatting export, add theme and screenshot</br>
 0.3 fix crash shell</br>
 0.2 separate backup, add import and export, fix not save</br>
