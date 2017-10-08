@@ -1,9 +1,10 @@
-# gnome-overview-conf v0.8
+# gnome-overview-conf v0.9
 edit gnome overview setting</br>
 
 Released under GPL v3
 
 ## Revision
+0.9 fix regex problems for old perl version</br>
 0.8 fix backup for distro that not use lib64</br>
 0.7 fix type property in library some distro use var instead of const</br>
 0.6 fix check lib64 or lib32, discharge gbus error</br>

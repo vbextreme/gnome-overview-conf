@@ -45,7 +45,7 @@ use File::Copy;
 ##########################
 ##########################
 
-our $VERSION = 0.8;
+our $VERSION = 0.9;
 
 my $REX_IMPORT ='([a-z_]+)[ \t]*=[ \t]*([0-9]+)';
 my $REX_VALUE = '[ \t]*=[ \t]*([0-9]+)';
@@ -199,9 +199,10 @@ sub rawWrite{
 }
 
 sub loadValue{
-	($shell{max_columns}) = $shell{buf} =~ /const|var MAX_COLUMNS$REX_VALUE/;
-	($shell{min_rows}) = $shell{buf} =~ /const|var MIN_ROWS$REX_VALUE/;
-	($shell{icon_size}) = $shell{buf} =~ /const|var ICON_SIZE$REX_VALUE/;
+	my $property;
+	($property, $shell{max_columns}) = $shell{buf} =~ /(const|var MAX_COLUMNS)$REX_VALUE/;
+	($property, $shell{min_rows}) = $shell{buf} =~ /(const|var MIN_ROWS)$REX_VALUE/;
+	($property, $shell{icon_size}) = $shell{buf} =~ /(const|var ICON_SIZE)$REX_VALUE/;
 	($theme{spacing},$theme{horizontal},$theme{vertical}) = $theme{buf} =~ /$REX_CSS/;
 	return 1;
 }
