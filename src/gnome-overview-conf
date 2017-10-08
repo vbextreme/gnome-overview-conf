@@ -45,7 +45,7 @@ use File::Copy;
 ##########################
 ##########################
 
-our $VERSION = 0.5;
+our $VERSION = 0.6;
 
 my $REX_IMPORT ='([a-z_]+)[ \t]*=[ \t]*([0-9]+)';
 my $REX_VALUE = '[ \t]*=[ \t]*([0-9]+)';
@@ -143,26 +143,28 @@ sudo gnome-overview-conf restore        # restore original value
 }
 
 sub initLibShell{
-	unless( $shell{file} ){
+	unless( -e $shell{file} ){
 		die "you use gnome?\ncause:not find libgnome in $shell{file} or $shell{file32}\n" unless -e $shell{file32};
 		$shell{file} = $shell{file32};
 	}
 }
 
 sub initBuiltIn{
+	print 'use builtin theme';
 	$theme{file} = "$theme{dirBuiltIn}/$theme{themeBuiltIn}";
 	$theme{backup} = "$theme{file}$EXT_BACKUP";
 	$theme{name} = 'BuiltIn';
 }
 
 sub initTheme{
-	my $name = $> ? `gsettings get org.gnome.shell.extensions.user-theme name`:`sudo -u "\$USER" gsettings get org.gnome.shell.extensions.user-theme name`;
+	my $name = $> ? `gsettings get org.gnome.shell.extensions.user-theme name 2> /dev/null`:`sudo -u "\$USER" gsettings get org.gnome.shell.extensions.user-theme name 2> /dev/null`;
 
-	if (defined $name and $name){
+	if (defined $name and $name ne '' ){
 		$name = substr($name, 1, length($name)-3);
 
 		my $file = "$theme{dirTheme}/$name/$theme{themeCSS}";
 		if ( -e $file ){
+			print 'use custom theme';
 			$theme{name} = $name;
 			$theme{file} = $file;
 			$theme{backup} = "$file$EXT_BACKUP";
