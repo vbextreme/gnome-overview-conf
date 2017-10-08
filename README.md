@@ -4,7 +4,7 @@ edit gnome overview setting</br>
 Released under GPL v3
 
 ## Revision
-0.6 fix check lib64 or lib32, discharge gbus error
+0.6 fix check lib64 or lib32, discharge gbus error</br>
 0.5 fix shebang, fix directory lib is different in some distro</br>
 0.4 fix import not reload value, fix formatting export, add theme and screenshot</br>
 0.3 fix crash shell</br>
