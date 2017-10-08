@@ -45,7 +45,7 @@ use File::Copy;
 ##########################
 ##########################
 
-our $VERSION = 0.6;
+our $VERSION = 0.7;
 
 my $REX_IMPORT ='([a-z_]+)[ \t]*=[ \t]*([0-9]+)';
 my $REX_VALUE = '[ \t]*=[ \t]*([0-9]+)';
@@ -57,9 +57,9 @@ my $REX_VERTICAL = '-shell-grid-vertical-item-size:[ \t]*([0-9]+)px\;';
 my $REX_CSS = "$REX_ICON_GRID$REX_SPACING$REX_HORIZONTAL$REX_VERTICAL";
 my $EXT_BACKUP = '.bak';
 
-my %MATCH = (	max_columns => '(const MAX_COLUMNS[ \t]*=)',
-				min_rows => '(const MIN_ROWS[ \t]*=)',
-				icon_size => '(const ICON_SIZE[ \t]*=)',
+my %MATCH = (	max_columns => '(const|var MAX_COLUMNS[ \t]*=)',
+				min_rows => '(const|var MIN_ROWS[ \t]*=)',
+				icon_size => '(const|var ICON_SIZE[ \t]*=)',
 				spacing =>    '(\.icon-grid[ \t]*{[ \t\n]*spacing:)',
 				horizontal => '(\.icon-grid[ \t]*{[ \t\n]*spacing:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-horizontal-item-size:)',
 				vertical =>   '(\.icon-grid[ \t]*{[ \t\n]*spacing:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-horizontal-item-size:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-vertical-item-size:)'
@@ -150,7 +150,7 @@ sub initLibShell{
 }
 
 sub initBuiltIn{
-	print 'use builtin theme';
+	print "use builtin theme";
 	$theme{file} = "$theme{dirBuiltIn}/$theme{themeBuiltIn}";
 	$theme{backup} = "$theme{file}$EXT_BACKUP";
 	$theme{name} = 'BuiltIn';
@@ -164,7 +164,7 @@ sub initTheme{
 
 		my $file = "$theme{dirTheme}/$name/$theme{themeCSS}";
 		if ( -e $file ){
-			print 'use custom theme';
+			print "use custom theme\n";
 			$theme{name} = $name;
 			$theme{file} = $file;
 			$theme{backup} = "$file$EXT_BACKUP";
@@ -197,9 +197,9 @@ sub rawWrite{
 }
 
 sub loadValue{
-	($shell{max_columns}) = $shell{buf} =~ /const MAX_COLUMNS$REX_VALUE/;
-	($shell{min_rows}) = $shell{buf} =~ /const MIN_ROWS$REX_VALUE/;
-	($shell{icon_size}) = $shell{buf} =~ /const ICON_SIZE$REX_VALUE/;
+	($shell{max_columns}) = $shell{buf} =~ /const|var MAX_COLUMNS$REX_VALUE/;
+	($shell{min_rows}) = $shell{buf} =~ /const|var MIN_ROWS$REX_VALUE/;
+	($shell{icon_size}) = $shell{buf} =~ /const|var ICON_SIZE$REX_VALUE/;
 	($theme{spacing},$theme{horizontal},$theme{vertical}) = $theme{buf} =~ /$REX_CSS/;
 	return 1;
 }
@@ -232,7 +232,7 @@ sub backup{
 
 sub setPreserve{
 	my ($h, $match, $newValue) = @_;	
-	my ($unused, $space,$value) = $h->{buf} =~ /$match([ \t]*)([0-9]+)/;
+	my ($unused, $space, $value) = $h->{buf} =~ /$match([ \t]*)([0-9]+)/;
 	my $maxlen = length($space) + length($value);
 	my $len = length($newValue);
 	return undef if $len > $maxlen;
