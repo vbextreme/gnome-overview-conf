@@ -45,7 +45,7 @@ use File::Copy;
 ##########################
 ##########################
 
-our $VERSION = 0.7;
+our $VERSION = 0.8;
 
 my $REX_IMPORT ='([a-z_]+)[ \t]*=[ \t]*([0-9]+)';
 my $REX_VALUE = '[ \t]*=[ \t]*([0-9]+)';
@@ -66,6 +66,7 @@ my %MATCH = (	max_columns => '(const|var MAX_COLUMNS[ \t]*=)',
 			);
 
 my %shell = (	file32 => '/usr/lib/gnome-shell/libgnome-shell.so',
+				backup32 => '/usr/lib/gnome-shell/libgnome-shell.so.bak',
 				file =>   '/usr/lib64/gnome-shell/libgnome-shell.so',
 				backup => '/usr/lib64/gnome-shell/libgnome-shell.so.bak',
 				readSize => 4096,
@@ -146,11 +147,12 @@ sub initLibShell{
 	unless( -e $shell{file} ){
 		die "you use gnome?\ncause:not find libgnome in $shell{file} or $shell{file32}\n" unless -e $shell{file32};
 		$shell{file} = $shell{file32};
+		$shell{backup} = $shell{backup32};
 	}
 }
 
 sub initBuiltIn{
-	print "use builtin theme";
+	print "use builtin theme\n";
 	$theme{file} = "$theme{dirBuiltIn}/$theme{themeBuiltIn}";
 	$theme{backup} = "$theme{file}$EXT_BACKUP";
 	$theme{name} = 'BuiltIn';
@@ -225,9 +227,9 @@ sub restore{
 sub backup{
 	die "Error privilege\ncause:you need root\n" if $>;
 	print "create theme backup\n";
-	copy($theme{file}, $theme{backup}) or die "cant create backup\ncause:$!\n";
+	copy($theme{file}, $theme{backup}) or die "cant create theme backup\ncause:$!\n";
 	print "create shell backup\n";
-	copy($shell{file}, $shell{backup}) or die "cant create backup\ncause:$!\n";
+	copy($shell{file}, $shell{backup}) or die "cant create shell backup\ncause:$!\n";
 }
 
 sub setPreserve{
