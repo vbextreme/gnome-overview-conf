@@ -4,6 +4,7 @@ edit gnome overview setting</br>
 Released under GPL v3
 
 ## Revision
+0.10 fix regex same problem v0.9</br>
 0.9 fix regex problems for old perl version</br>
 0.8 fix backup for distro that not use lib64</br>
 0.7 fix type property in library some distro use var instead of const</br>
