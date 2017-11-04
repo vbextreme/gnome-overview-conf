@@ -45,7 +45,7 @@ use File::Copy;
 ##########################
 ##########################
 
-our $VERSION = 0.10;
+our $VERSION = 0.11;
 
 my $REX_IMPORT ='([a-z_]+)[ \t]*=[ \t]*([0-9]+)';
 my $REX_VALUE = '[ \t]*=[ \t]*([0-9]+)';
@@ -57,9 +57,9 @@ my $REX_VERTICAL = '-shell-grid-vertical-item-size:[ \t]*([0-9]+)px\;';
 my $REX_CSS = "$REX_ICON_GRID$REX_SPACING$REX_HORIZONTAL$REX_VERTICAL";
 my $EXT_BACKUP = '.bak';
 
-my %MATCH = (	max_columns => '(const|var MAX_COLUMNS[ \t]*=)',
-				min_rows => '(const|var MIN_ROWS[ \t]*=)',
-				icon_size => '(const|var ICON_SIZE[ \t]*=)',
+my %MATCH = (	max_columns => '((?:const|var) MAX_COLUMNS[ \t]*=)',
+				min_rows => '((?:const|var) MIN_ROWS[ \t]*=)',
+				icon_size => '((?:const|var) ICON_SIZE[ \t]*=)',
 				spacing =>    '(\.icon-grid[ \t]*{[ \t\n]*spacing:)',
 				horizontal => '(\.icon-grid[ \t]*{[ \t\n]*spacing:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-horizontal-item-size:)',
 				vertical =>   '(\.icon-grid[ \t]*{[ \t\n]*spacing:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-horizontal-item-size:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-vertical-item-size:)'

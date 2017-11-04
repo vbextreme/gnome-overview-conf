@@ -1,9 +1,10 @@
-# gnome-overview-conf v0.10
+# gnome-overview-conf v0.11
 edit gnome overview setting</br>
 
 Released under GPL v3
 
 ## Revision
+0.11 fix regex in set value</br>
 0.10 fix regex same problem v0.9</br>
 0.9 fix regex problems for old perl version</br>
 0.8 fix backup for distro that not use lib64</br>
