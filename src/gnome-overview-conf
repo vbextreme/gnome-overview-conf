@@ -27,6 +27,8 @@ License gplv3
 
 =cut
 
+#TODO rewrite read/wrtie multisetting in single line
+
 ###########################
 ###########################
 #####     INCLUDE     #####
@@ -35,7 +37,7 @@ License gplv3
 
 use strict;
 use warnings;
-use diagnostics;
+#use diagnostics;
 use lib '.' ;
 use File::Copy;
 
@@ -45,24 +47,35 @@ use File::Copy;
 ##########################
 ##########################
 
-our $VERSION = 0.11;
+our $VERSION = 0.12;
 
 my $REX_IMPORT ='([a-z_]+)[ \t]*=[ \t]*([0-9]+)';
 my $REX_VALUE = '[ \t]*=[ \t]*([0-9]+)';
 my $REX_VALUE_SET = '([ \t]*=)([ \t]*)([0-9]+)';
 my $REX_ICON_GRID = '\.icon-grid[ \t]*{[ \t\n]*';
-my $REX_SPACING = 'spacing:[ \t]*([0-9]+)px\;[ \t\n]*';
-my $REX_HORIZONTAL = '-shell-grid-horizontal-item-size:[ \t]*([0-9]+)px\;[ \t\n]*';
-my $REX_VERTICAL = '-shell-grid-vertical-item-size:[ \t]*([0-9]+)px\;';
+my $REX_SPACING = 'spacing:[ \t]*([0-9]+)px;[ \t\n]*';
+my $REX_HORIZONTAL = '-shell-grid-horizontal-item-size:[ \t]*([0-9]+)px;[ \t\n]*';
+my $REX_VERTICAL = '-shell-grid-vertical-item-size:[ \t]*([0-9]+)px;';
 my $REX_CSS = "$REX_ICON_GRID$REX_SPACING$REX_HORIZONTAL$REX_VERTICAL";
+my $REX_PANEL_FONT_COLOR = 'panel.solid[ \t\n]*\.panel-button[ \t\n]*{[ \t\n]*color:[ \t\n]*#([A-Fa-f0-9]+)';
+my $REX_PANEL_FONT_COLOR_CHECKED = 'panel.solid[ \t\n]*\.panel-button:checked[ \t\n]*{[ \t\n]*color:[ \t\n]*#([A-Fa-f0-9]+)';
+my $REX_PANEL_MIN_HEIGHT = 'panel[ \t\n]*{[ \t\n]*min-height:[ \t\n]*([0-9]*)px[; \t\n]*';
+my $REX_PANEL_HEIGHT = 'height:[ \t\n]*([0-9.]*)em[; \t\n]*';
+my $REX_PANEL_FONT_WEIGHT ='font-weight:[ \t\n]*([0-9]*)';
+my $REX_PANEL_CSS = "$REX_PANEL_MIN_HEIGHT$REX_PANEL_HEIGHT$REX_PANEL_FONT_WEIGHT";
 my $EXT_BACKUP = '.bak';
 
-my %MATCH = (	max_columns => '((?:const|var) MAX_COLUMNS[ \t]*=)',
-				min_rows => '((?:const|var) MIN_ROWS[ \t]*=)',
-				icon_size => '((?:const|var) ICON_SIZE[ \t]*=)',
-				spacing =>    '(\.icon-grid[ \t]*{[ \t\n]*spacing:)',
-				horizontal => '(\.icon-grid[ \t]*{[ \t\n]*spacing:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-horizontal-item-size:)',
-				vertical =>   '(\.icon-grid[ \t]*{[ \t\n]*spacing:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-horizontal-item-size:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-vertical-item-size:)'
+my %MATCH = (	max_columns => '((?:const|var) MAX_COLUMNS[ \t]*=)([ \t\n]*)([0-9]+)',
+				min_rows => '((?:const|var) MIN_ROWS[ \t]*=)([ \t\n]*)([0-9]+)',
+				icon_size => '((?:const|var) ICON_SIZE[ \t]*=)([ \t\n]*)([0-9]+)',
+				spacing => '(\.icon-grid[ \t]*{[ \t\n]*spacing:)([ \t\n*])([0-9]+)',
+				horizontal => '(\.icon-grid[ \t]*{[ \t\n]*spacing:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-horizontal-item-size:)([ \t\n]*)([0-9]+)',
+				vertical => '(\.icon-grid[ \t]*{[ \t\n]*spacing:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-horizontal-item-size:[ \t]*[0-9]*px\;[ \t\n]*-shell-grid-vertical-item-size:)([ \t\n]*)([0-9]+)',
+				panel_font_color => '(panel.solid[ \t\n]*\.panel-button[ \t\n]*{[ \t\n]*color:[ \t\n]*#)([ \t\n]*)([A-Fa-f0-9]+)',
+				panel_font_color_checked => '(panel.solid[ \t\n]*\.panel-button:checked[ \t\n]*{[ \t\n]*color:[ \t\n]*#)([ \t\n]*)([A-Fa-f0-9]+)',
+				panel_min_height => '(panel[ \t\n]*{[ \t\n]*min-height:)([ \t\n]*)([0-9]+)',
+				panel_height => '(panel[ \t\n]*{[ \t\n]*min-height:[ \t\n]*[0-9]*px;[ \t\n]*height:)([ \t\n]*)([0-9.]+)',
+			   	panel_font_weight => '(panel[ \t\n]*{[ \t\n]*min-height:[ \t\n]*[0-9]*px;[ \t\n]*height:[ \t\n]*[0-9.]*em;[ \t\n]*font-weight:)([ \t\n]*)([0-9]+)'
 			);
 
 my %shell = (	file32 => '/usr/lib/gnome-shell/libgnome-shell.so',
@@ -89,7 +102,12 @@ my %SELECT = (	max_columns => \%shell,
 				icon_size => \%shell,
 				spacing =>    \%theme,
 				horizontal => \%theme,
-				vertical => \%theme
+				vertical => \%theme,
+				panel_font_color => \%theme,
+				panel_font_color_checked => \%theme,
+				panel_min_height => \%theme,
+				panel_height => \%theme,
+				panel_font_weight => \%theme
 			);
 
 
@@ -114,6 +132,7 @@ texport($ARGV[1]) and exit 1 if $ARGV[0] eq 'export';
 while(@ARGV){
 	my $var = shift @ARGV;
 	my $val = shift @ARGV;
+	
 	die "Error input\ncause: no value set\n" unless defined $val;
 	die "Error input\ncause: $var is not valid variable\n" unless exists $MATCH{$var};
 	setPreserve($SELECT{$var}, $MATCH{$var}, $val);
@@ -203,17 +222,27 @@ sub loadValue{
 	($shell{min_rows}) = $shell{buf} =~ /(?:(?:const|var) MIN_ROWS)$REX_VALUE/;
 	($shell{icon_size}) = $shell{buf} =~ /(?:(?:const|var) ICON_SIZE)$REX_VALUE/;
 	($theme{spacing},$theme{horizontal},$theme{vertical}) = $theme{buf} =~ /$REX_CSS/;
+	($theme{panel_font_color}) = $theme{buf} =~ /$REX_PANEL_FONT_COLOR/;
+	($theme{panel_font_color_checked}) = $theme{buf} =~ /$REX_PANEL_FONT_COLOR_CHECKED/;
+	print "CSS::$REX_PANEL_CSS\n";
+	($theme{panel_min_height},$theme{panel_height},$theme{panel_font_weight}) = $theme{buf} =~ /$REX_PANEL_CSS/;
 	return 1;
 }
 
 sub view{
 	loadValue();
-	print "max_columns = $shell{max_columns}\n";
-	print "min_rows    = $shell{min_rows}\n";
-	print "icon_size   = $shell{icon_size}\n";
-	print "spacing    = $theme{spacing}\n";
-	print "horizontal = $theme{horizontal}\n";
-	print "vertical   = $theme{vertical}\n";
+	print "max_columns              = $shell{max_columns}\n" if $shell{max_columns};
+	print "min_rows                 = $shell{min_rows}\n" if $shell{min_rows};
+	print "icon_size                = $shell{icon_size}\n" if $shell{icon_size};
+	print "spacing                  = $theme{spacing}\n" if $theme{spacing};
+	print "horizontal               = $theme{horizontal}\n" if $theme{horizontal};
+	print "vertical                 = $theme{vertical}\n" if $theme{vertical};
+	print "panel_font_color         = $theme{panel_font_color}\n" if $theme{panel_font_color};
+	print "panel_font_color_checked = $theme{panel_font_color_checked}\n" if $theme{panel_font_color_checked};
+	print "panel_min_height         = $theme{panel_min_height}\n" if $theme{panel_min_height};
+	print "panel_height             = $theme{panel_height}\n" if $theme{panel_height};
+	print "panel_font_weight        = $theme{panel_font_weight}\n" if $theme{panel_font_weight};
+
 	return 1;
 }
 
@@ -233,15 +262,19 @@ sub backup{
 }
 
 sub setPreserve{
-	my ($h, $match, $newValue) = @_;	
-	my ($unused, $space, $value) = $h->{buf} =~ /$match([ \t]*)([0-9]+)/;
+	my ($h, $match, $newValue) = @_;
+	#print "MATCH::$match\n";
+	my ($unused, $space, $value) = $h->{buf} =~ /$match/;
+	#print "UNUSED:$unused\n";
+	#print "VALUE:$value\n";
+	die "Error regex::$match fail\n" unless $unused or $value;
 	my $maxlen = length($space) + length($value);
 	my $len = length($newValue);
 	return undef if $len > $maxlen;
 	my $nspace = $maxlen - $len;
 	$space = $nspace ? ' ' x $nspace : '';
 	my $replace = "$space$newValue";
-	$h->{buf} =~ s/${match}[ \t]*[0-9]+/$1$replace/;
+	$h->{buf} =~ s/${match}/$1$replace/;
 	return 1;
 }
 
@@ -256,6 +289,12 @@ sub texport{
 	print $fd "spacing = $theme{spacing}\n";
 	print $fd "horizontal = $theme{horizontal}\n";
 	print $fd "vertical = $theme{vertical}\n";
+	print $fd "panel_font_color = $theme{panel_font_color}\n";
+	print $fd "panel_font_color_checked = $theme{panel_font_color_checked}\n";
+	print $fd "panel_min_height = $theme{panel_min_height}\n";
+	print $fd "panel_height = $theme{panel_height}\n";
+	print $fd "panel_font_weight = $theme{panel_font_weight}\n";
+
 	return 1;
 }
 
