@@ -56,6 +56,8 @@ after setting value reload shell with</br>
 ALT+F2 
 r
 ```
+(for Wayland users: you'll have to reboot or log out and log back in, sorry about that)</br>
+</br>
 go to directory ./theme</br>
 save current overview theme, example name mytheme</br>
 ```
