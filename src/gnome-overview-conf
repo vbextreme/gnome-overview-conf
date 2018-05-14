@@ -90,6 +90,7 @@ my %theme = (	file => undef,
 				backup => undef,
 				name => undef,
 				dirTheme => '/usr/share/themes',
+				userTheme => "/home/$ENV{USER}/.themes",
 				themeCSS => 'gnome-shell/gnome-shell.css',
 				themeBuiltIn => 'gnome-shell-theme.gresource',
 				dirBuiltIn => '/usr/share/gnome-shell',
@@ -128,6 +129,7 @@ restore() and exit 1 if $ARGV[0] eq 'restore';
 backup() and exit 1 if $ARGV[0] eq 'backup';
 timport($ARGV[1]) and exit 1 if $ARGV[0] eq 'import';
 texport($ARGV[1]) and exit 1 if $ARGV[0] eq 'export';
+waylandcrash() or exit 1 if $ARGV[0] eq 'wayland_restart';
 
 while(@ARGV){
 	my $var = shift @ARGV;
@@ -182,13 +184,21 @@ sub initTheme{
 
 	if (defined $name and $name ne '' ){
 		$name = substr($name, 1, length($name)-3);
-
-		my $file = "$theme{dirTheme}/$name/$theme{themeCSS}";
-		if ( -e $file ){
-			print "use custom theme\n";
+		
+		my $fileusr = "$theme{dirTheme}/$name/$theme{themeCSS}";
+		my $filehome = "$theme{userTheme}/$name/$theme{themeCSS}";
+		
+		if ( -e $fileusr ){
+			print "use $name in usr directory\n";
 			$theme{name} = $name;
-			$theme{file} = $file;
-			$theme{backup} = "$file$EXT_BACKUP";
+			$theme{file} = $fileusr;
+			$theme{backup} = "$fileusr$EXT_BACKUP";
+		}
+		elsif ( -e $filehome ){
+			print "use $name in home directory\n";
+			$theme{name} = $name;
+			$theme{file} = $filehome;
+			$theme{backup} = "$filehome$EXT_BACKUP";
 		}
 		else{
 			initBuiltIn();
@@ -224,7 +234,7 @@ sub loadValue{
 	($theme{spacing},$theme{horizontal},$theme{vertical}) = $theme{buf} =~ /$REX_CSS/;
 	($theme{panel_font_color}) = $theme{buf} =~ /$REX_PANEL_FONT_COLOR/;
 	($theme{panel_font_color_checked}) = $theme{buf} =~ /$REX_PANEL_FONT_COLOR_CHECKED/;
-	print "CSS::$REX_PANEL_CSS\n";
+	#print "CSS::$REX_PANEL_CSS\n";
 	($theme{panel_min_height},$theme{panel_height},$theme{panel_font_weight}) = $theme{buf} =~ /$REX_PANEL_CSS/;
 	return 1;
 }
@@ -289,11 +299,11 @@ sub texport{
 	print $fd "spacing = $theme{spacing}\n";
 	print $fd "horizontal = $theme{horizontal}\n";
 	print $fd "vertical = $theme{vertical}\n";
-	print $fd "panel_font_color = $theme{panel_font_color}\n";
-	print $fd "panel_font_color_checked = $theme{panel_font_color_checked}\n";
-	print $fd "panel_min_height = $theme{panel_min_height}\n";
-	print $fd "panel_height = $theme{panel_height}\n";
-	print $fd "panel_font_weight = $theme{panel_font_weight}\n";
+	print $fd "panel_font_color = $theme{panel_font_color}\n" if $theme{panel_font_color};
+	print $fd "panel_font_color_checked = $theme{panel_font_color_checked}\n" if $theme{panel_font_color_checked};
+	print $fd "panel_min_height = $theme{panel_min_height}\n" if $theme{panel_min_height};
+	print $fd "panel_height = $theme{panel_height}\n" if $theme{panel_height};
+	print $fd "panel_font_weight = $theme{panel_font_weight}\n" if $theme{panel_font_weight};
 
 	return 1;
 }
@@ -314,4 +324,20 @@ sub timport{
 	return 1;
 }
 
+sub copyfk{
+	my ($src,$dst) = @_;
+	open my $fds, "<", $src or die "cant read $src\ncause:$!\n";
+	binmode($fds);
+	open my $fdd, ">", $dst or die "cant write $dst\ncause:$!\n";
+	binmode($fdd);
+	my ($buf, $nread);
+	while( ($nread = sysread($fds,$buf,1024)) > 0 ){
+		syswrite($fdd,$buf);
+	}
+	return 1;
+}
 
+sub waylandcrash{
+	copyfk( $shell{file}, "$shell{file}.crash" );
+	copyfk( "$shell{file}.crash", $shell{file} ); 
+}

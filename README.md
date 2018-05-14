@@ -1,10 +1,11 @@
-# gnome-overview-conf v0.12
+# gnome-overview-conf v0.13
 edit gnome overview setting</br>
 
 Released under GPL v3
 
 ## Revision
-0.12 add panel setings, color, height
+0.13 fix path user, fix export pannel, add new theme</br>
+0.12 add panel setings, color, height</br>
 0.11 fix regex in set value</br>
 0.10 fix regex same problem v0.9</br>
 0.9 fix regex problems for old perl version</br>

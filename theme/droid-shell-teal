@@ -1,0 +1,7 @@
+max_columns = 7
+min_rows = 5
+icon_size = 96
+spacing = 30
+horizontal = 130
+vertical = 120
+panel_font_color_checked = FFFFFF
